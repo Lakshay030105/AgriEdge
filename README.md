@@ -32,7 +32,7 @@ In compliance with the official **OMNIKON 2026 Hackathon Eligibility & Documenta
 | Contributor | GitHub Username | Role | Key Contributions |
 |:---|:---|:---|:---|
 | **Sahil** | [`@Sahil-web01`](https://github.com/Sahil-web01) | **MERN Full-Stack Architect** | PWA architecture, Vite/React UI, IndexedDB/Dexie.js integration, HTML5 Canvas preprocessing pipeline, Background Sync API & deferred cloud sync. |
-| **Lakshay Gauniyal** | [`@LakshayGauniyal`](https://github.com/LakshayGauniyal) | **AI & Deep Learning Lead** | MobileNetV2 fine-tuning on PlantVillage dataset, INT8 quantization pipeline, TF.js WebGL/WASM runtime, Grad-CAM class activation mapping implementation. |
+| **Lakshay Gauniyal** | [`@Lakshay030105`](https://github.com/Lakshay030105) | **AI & Deep Learning Lead** | MobileNetV2 fine-tuning on PlantVillage dataset, INT8 quantization pipeline, TF.js WebGL/WASM runtime, Grad-CAM class activation mapping implementation. |
 
 ---
 
@@ -299,6 +299,49 @@ npm run dev
 
 ---
 
+## 🌐 Live Deployment & Demo
+
+- **Live PWA Application:** *Deployment URL will be linked here and in the GitHub repository "About" section prior to Round 2.*
+- **Target Deployment Platform:** Vercel / Cloudflare Pages (PWA Static Edge distribution)
+- **Demo Walkthrough Video:** *(2–5 min video will be uploaded for Round 2 showcase per submission guidelines)*
+
+---
+
+## 🔍 Reviewer Notes
+
+> [!NOTE]
+> **Notes Prepared for OMNIKON 2026 Evaluation Panel:**
+
+1. **Zero-Cloud Verification:**
+   - To verify that AgriEdge operates completely offline, open Chrome DevTools, navigate to the **Network** tab, select **Offline**, and run a crop scan. The full inference pipeline (WebGL execution, Grad-CAM visualization, and IndexedDB advisory lookup) will execute seamlessly with 0 network requests.
+2. **Explainable AI (XAI) Verification:**
+   - Grad-CAM heatmap visualization can be toggled directly on the leaf viewport to inspect the activation weights of the final convolutional layer of MobileNetV2.
+3. **PWA Installation:**
+   - On Chromium-based browsers or mobile devices, click the **Install App** button in the address bar or browser menu to install AgriEdge as a standalone offline app shell.
+4. **Data Privacy & Telemetry:**
+   - Telemetry sync is purely opt-in, non-PII, and strictly deferred via the W3C Background Sync API to ensure zero disruption during field usage. Full security details are available in [SECURITY.md](SECURITY.md).
+
+---
+
+## 🤖 Generative AI Tooling & Attribution Disclosure
+
+In compliance with the **OMNIKON National Hackathon 2026 AI Disclosure Policy**:
+- **Assisted Tools:** Antigravity IDE / Gemini AI models were utilized as developer productivity assistants for architectural documentation formatting, code scaffolding, and README badge styling.
+- **Originality Guarantee:** The core machine learning fine-tuning logic, Grad-CAM WebGL shader implementation, IndexedDB agronomic knowledge architecture, and PWA integration represent original engineering work conceived and executed by **Team LOGIC LEGION** (`@Sahil-web01` and `@Lakshay030105`) during the hackathon period starting post-August 15, 2026.
+- **Third-Party Attribution:** All external datasets (Kaggle PlantVillage), base architectures (MobileNetV2), algorithms (Grad-CAM), and open-source libraries (`@tensorflow/tfjs`, `dexie`, `vite-plugin-pwa`) are formally cited in the [Research Foundation & Citations](#-research-foundation--technical-citations) section.
+
+---
+
+## 📜 Documentation & Governance Links
+
+- 📄 **[LICENSE (MIT)](LICENSE)** — Open Source License
+- 🔒 **[SECURITY.md](SECURITY.md)** — Data Protection, Edge Privacy & Vulnerability Policy
+- 🤝 **[CONTRIBUTING.md](CONTRIBUTING.md)** — Hackathon Contribution & Branching Guidelines
+- 📜 **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — Community Standards & Pledges
+- 📐 **[docs/architecture.md](docs/architecture.md)** — Technical Architecture Specification & 38-Class Taxonomy
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
@@ -309,3 +352,4 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 <b>LOGIC LEGION — OMNIKON NATIONAL HACKATHON 2026</b><br/>
 <i>Empowering 120M+ Smallholder Farmers with Zero-Cloud Edge AI</i>
 </div>
+
