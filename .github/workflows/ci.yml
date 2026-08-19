@@ -1,0 +1,29 @@
+name: AgriEdge CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+
+    - name: Verify repository structure
+      run: |
+        test -f README.md
+        test -f LICENSE
+        test -f .gitignore
+        test -d docs
+        test -d ml
+        test -d client
+        test -d server
