@@ -1,0 +1,11 @@
+{
+  "variant": "Float32, no quantization",
+  "cases": 38,
+  "bundleSizeMB": 8.922,
+  "top1Matches": 38,
+  "exactTop3Matches": 38,
+  "top3SetMatches": 38,
+  "maximumAbsoluteProbabilityDrift": 3.069639205932617e-06,
+  "invalidProbabilityCases": 0,
+  "float32ParityPassed": true
+}

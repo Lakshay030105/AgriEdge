@@ -1,0 +1,15 @@
+{
+  "modelUrl": "./model.json",
+  "labelsUrl": "./labels.json",
+  "metadataUrl": "./metadata.json",
+  "imageWidth": 224,
+  "imageHeight": 224,
+  "channels": 3,
+  "inputPixelMinimum": 0,
+  "inputPixelMaximum": 255,
+  "dividePixelsBy255": false,
+  "topK": 3,
+  "minimumConfidence": 0.6,
+  "minimumMargin": 0.1,
+  "lastConvolutionLayer": "Conv_1"
+}
