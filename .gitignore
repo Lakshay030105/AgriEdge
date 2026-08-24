@@ -59,6 +59,7 @@ ENV/
 # PWA and Service Worker caches
 .cache/
 .vite/
+dev-dist/
 sw-cache*
 
 # ML datasets and training artifacts

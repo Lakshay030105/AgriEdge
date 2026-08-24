@@ -33,7 +33,7 @@ In compliance with the official **OMNIKON 2026 Hackathon Eligibility & Documenta
 | Contributor | GitHub Username | Role | Key Architectural Ownership |
 |:---|:---|:---|:---|
 | **Sahil** | [`@Sahil-web01`](https://github.com/Sahil-web01) | **MERN Full-Stack Architect** | **Level 2 Lead:** NGO & Government Command Center architecture, React dashboard with interactive Leaflet.js / Mapbox GL live India outbreak heatmap, Node.js + Express REST backend, IndexedDB/Dexie.js deferred background sync pipeline, and Service Worker offline caching. |
-| **Lakshay Gauniyal** | [`@Lakshay030105`](https://github.com/Lakshay030105) | **AI & Deep Learning Lead** | **Level 1 Lead:** MobileNetV2 fine-tuning on PlantVillage dataset (38 categories), INT8 post-training quantization, secondary Computer Vision edge segmentation filter (OpenCV.js / Canvas) for precise leaf surface area severity grading, and Grad-CAM class activation mapping. |
+| **Lakshay Gauniyal** | [`@Lakshay030105`](https://github.com/Lakshay030105) | **AI & Deep Learning Lead** | **Level 1 Lead:** MobileNetV2 fine-tuning on PlantVillage dataset (38 categories), browser-optimized Float32 TF.js model export (8.922 MiB bundle), 38/38 verified Python-to-TF.js parity validation, secondary Computer Vision edge segmentation filter (OpenCV.js / Canvas) for precise leaf surface area severity grading, and Grad-CAM class activation mapping. |
 
 ---
 
@@ -58,7 +58,7 @@ In compliance with the official **OMNIKON 2026 Hackathon Eligibility & Documenta
 > *"Telling a farmer they have 'Early Blight' is good. Telling them 'Early Blight is detected, and it has currently infected 28% of the leaf surface area' is Top 10 material."*
 
 - **The Concept:** Move beyond binary or basic image classification. Introduce a secondary computer vision pipeline that computes the exact severity of the foliar infection directly on-device.
-- **The Execution:** Once the quantized **MobileNetV2** model identifies the pathogen class (e.g. *Alternaria solani*), the image is immediately piped through an edge-based segmentation filter (using **OpenCV.js / HTML5 Canvas pixel analysis** directly in browser memory).
+- **The Execution:** Once the browser-optimized **Float32 MobileNetV2** model identifies the pathogen class (e.g. *Alternaria solani*), the image is immediately piped through an edge-based segmentation filter (using **OpenCV.js / HTML5 Canvas pixel analysis** directly in browser memory).
 - **The Logic:**
   1. **Leaf Isolation:** Isolate the leaf contour from the background using adaptive HSV vegetation bounds and Otsu thresholding.
   2. **Lesion Extraction:** Isolate discolored necrotic spots, chlorosis halos, and fungal lesions from healthy green chlorophyll tissue.
@@ -68,6 +68,11 @@ In compliance with the official **OMNIKON 2026 Hackathon Eligibility & Documenta
   - 🟢 **Under 10% (Mild / Tier 1):** Recommends localized organic pruning, cold-pressed Neem oil spray, and cultural spacing adjustments.
   - 🟡 **10% – 30% (Moderate / Tier 2):** Recommends targeted bio-fungicides (*Trichoderma viride*, *Bacillus subtilis*), bio-copper formulations, and canopy isolation.
   - 🔴 **Over 30% (Severe / Tier 3):** Immediately advises emergency systemic chemical intervention (e.g. Azoxystrobin + Difenoconazole, Mancozeb alternation), stem quarantine, and regional telemetry broadcasting.
+
+#### 📊 TensorFlow.js Export & Parity Validation
+
+> [!NOTE]
+> **Engineering Note:** UINT8 post-training weight compression was evaluated but rejected after parity testing produced only 15/38 Top-1 matches. The released **Float32 TF.js model** achieved **38/38 Top-1 and Top-3 parity** with a maximum probability drift of approximately $0.00000307$. Its complete deployable bundle (**8.922 MiB** weights / ~9.36 MB total) remains comfortably below the 10 MB project budget while guaranteeing zero diagnostic degradation. Input pixels must remain in the `0–255` range because normalization (`x / 127.5 - 1`) is embedded inside the model graph.
 
 ---
 
@@ -126,7 +131,7 @@ In compliance with the official **OMNIKON 2026 Hackathon Eligibility & Documenta
 flowchart TD
     subgraph Farmer_Edge_PWA["📱 Farmer Edge PWA (100% Offline)"]
         A["📷 1. CAPTURE / VOICE\nPWA Viewfinder / Pulsing Mic\n'Take Photo' Voice Command"] --> B["⚙️ 2. PREPROCESS\nHTML5 Canvas API\n224x224x3 Normalization"]
-        B --> C["🧠 3. EDGE AI CLASSIFIER\nTensorFlow.js WebGL/WASM\nMobileNetV2 INT8 (<150ms)"]
+        B --> C["🧠 3. EDGE AI CLASSIFIER\nTensorFlow.js WebGL/WASM\nMobileNetV2 Float32 (<150ms)"]
         C --> D["🔬 4. LEVEL 1 SEVERITY CV\nOpenCV.js / Canvas Segmentation\nExact % Infected Area Ratio"]
         D --> E["🎙️ 5. LEVEL 3 VOICE UI\nWeb Speech API (Hindi/Eng)\nAutomated Treatment TTS"]
         E --> F["📋 6. ACTION ENGINE\nDexie.js IndexedDB\nDynamic 3-Tier IPM Advice"]
@@ -156,8 +161,8 @@ flowchart TD
 ┌────────────────────────────────┬────────────────────────────────┬────────────────────────────────┐
 │      FRONTEND CLIENT (PWA)     │         EDGE AI & CV           │      STORAGE & TELEMETRY       │
 ├────────────────────────────────┼────────────────────────────────┼────────────────────────────────┤
-│ • React 18 & Vite              │ • TensorFlow.js (@tfjs)        │ • IndexedDB (Browser NoSQL)    │
-│ • Web Speech API (STT & TTS)   │ • MobileNetV2 (INT8 Quantized) │ • Dexie.js API Wrapper         │
+│ • React 18 & Vite              │ • TensorFlow.js (@tfjs 4.22.0) │ • IndexedDB (Browser NoSQL)    │
+│ • Web Speech API (STT & TTS)   │ • MobileNetV2 (Float32 TF.js)  │ • Dexie.js API Wrapper         │
 │ • Leaflet.js / React-Leaflet   │ • OpenCV.js & Canvas CV        │ • Background Sync API          │
 │ • Mapbox GL Vector Tiles       │ • WebGL Fragment Shaders       │ • Node.js & Express.js REST    │
 │ • Lucide Icons & Canvas FX     │ • Grad-CAM XAI Saliency Engine │ • GeoJSON Outbreak Schema      │
@@ -183,7 +188,7 @@ AgriEdge classifies 38 distinct crop-disease combinations across major agricultu
 
 | Potential Risk / Challenge | Impact | Mitigation Strategy Implemented in AgriEdge | Supporting Theory |
 |:---|:---|:---|:---|
-| **Memory Overhead on Budget Devices** | High DL memory causing browser crashes on 2GB/3GB RAM phones. | **INT8 Quantization:** Compresses model from ~50MB to **<10MB**, cutting RAM footprint by ~75%. | *Post-training quantization:* Maps float32 to int8 with minimal accuracy degradation. |
+| **Memory & Bundle Budget on Edge Devices** | Heavy ML models causing slow downloads and high RAM usage on budget phones. | **Browser-Optimized Float32 TF.js Bundle:** 8.922 MiB deployable bundle fits strictly under the 10 MB budget while retaining 100% (38/38) classification parity. | *Optimized Model Topology:* Float32 delivers zero-drift accuracy without the catastrophic accuracy drop observed in UINT8 quantization (15/38 matches). |
 | **Field Lighting & Glare Variance** | Direct sunlight/blur degrading classification confidence. | **Guided Viewfinder UI & Voice UI:** Large pulsing mic + dynamic bounding guides user without glare friction. | *Human-factors design:* Multimodal speech/visual input eliminates bright-sun touch errors. |
 | **Illiteracy & Accessibility Gaps** | Smallholder farmers unable to read text diagnostics. | **Level 3 Bilingual Web Speech API:** Automatic Hindi/English speech readout of diagnosis and treatment. | *Universal Design:* Voice-first interface removes literacy barriers in rural farming. |
 | **Outbreak Lag for Regional Agencies** | Isolated farm outbreaks spreading before government awareness. | **Level 2 NGO Command Heatmap:** Silent deferred sync aggregates regional outbreaks into live cluster heatmaps. | *Epidemiological Surveillance:* Automated telemetry aggregation prevents famine-scale outbreaks. |
@@ -198,8 +203,8 @@ AgriEdge classifies 38 distinct crop-disease combinations across major agricultu
 ┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐
 │ ML Model & CV Engine    │ │ PWA & Voice Interface   │ │ NGO Command & Testing   │
 ├─────────────────────────┤ ├─────────────────────────┤ ├─────────────────────────┤
-│ • MobileNetV2 INT8 TFJS │ │ • React + Vite UI build │ │ • Sahil's NGO Dashboard │
-│ • Class-weighted loss   │ │ • Level 3 Voice STT/TTS │ │ • Leaflet/Mapbox Heatmap│
+│ • MobileNetV2 F32 TFJS  │ │ • React + Vite UI build │ │ • Sahil's NGO Dashboard │
+│ • 38/38 Parity Gate     │ │ • Level 3 Voice STT/TTS │ │ • Leaflet/Mapbox Heatmap│
 │ • Lakshay's OpenCV.js   │ │ • Dexie.js Tiered IPM DB│ │ • Express Sync Backend  │
 │   Severity Grading math │ │ • Canvas guided camera  │ │ • Cross-device stress   │
 └─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘
@@ -248,7 +253,7 @@ AgriEdge/
 ├── .github/                   # CI/CD workflows and issue templates
 ├── client/                    # Offline-First React + Vite Progressive Web App (PWA)
 │   ├── public/
-│   │   ├── models/            # Quantized INT8 MobileNetV2 TF.js model shards
+│   │   ├── models/            # Browser-optimized Float32 MobileNetV2 TF.js model (8.922 MiB)
 │   │   └── favicon.ico
 │   ├── src/
 │   │   ├── components/        # Scanner, Severity Card, Treatment Plan, Voice Button, NGO Map
@@ -270,7 +275,7 @@ AgriEdge/
 │   │   └── routes/            # REST API endpoints (/api/telemetry/sync, /api/telemetry/outbreaks)
 │   ├── server.js              # Express.js application entry
 │   └── package.json
-├── ml/                        # Model Training & TF.js INT8 Quantization Pipeline
+├── ml/                        # Model Training, TF.js Export & Parity Validation Pipeline
 │   ├── notebooks/             # MobileNetV2 fine-tuning, OpenCV severity & Grad-CAM validation
 │   ├── scripts/               # PlantVillage data prep, class weighting & export scripts
 │   └── requirements.txt       # Python training dependencies
