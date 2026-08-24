@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "releaseName": "AgriEdge MobileNetV2 v2",
+  "modelVersion": "2.0.0",
+  "createdAtUTC": "2026-08-23T15:45:24.148572+00:00",
+  "status": "release-approved",
+  "modelType": "tfjs_layers_model",
+  "architecture": "MobileNetV2",
+  "classCount": 38,
+  "modelFile": "model.json",
+  "labelsFile": "labels.json",
+  "input": {
+    "name": "image",
+    "shape": [
+      1,
+      224,
+      224,
+      3
+    ],
+    "dtype": "float32",
+    "colorOrder": "RGB",
+    "pixelRange": [
+      0,
+      255
+    ],
+    "normalizationEmbeddedInModel": true,
+    "normalization": "Rescaling(1/127.5, offset=-1)",
+    "frontendMustDivideBy255": false
+  },
+  "output": {
+    "name": "probabilities",
+    "shape": [
+      1,
+      38
+    ],
+    "meaning": "Softmax probabilities ordered by labels.json id",
+    "recommendedTopK": 3
+  },
+  "decisionPolicy": {
+    "minimumConfidence": 0.6,
+    "minimumTop1Top2Margin": 0.1,
+    "rejectedStatus": "uncertain",
+    "userMessage": "Image is unclear or prediction is uncertain. Capture another leaf image."
+  },
+  "runtime": {
+    "preferredBackend": "webgl",
+    "fallbackBackends": [
+      "wasm",
+      "cpu"
+    ],
+    "offlineCompatible": true
+  },
+  "gradCam": {
+    "supported": true,
+    "lastConvolutionLayer": "Conv_1",
+    "tailLayers": [
+      "Conv_1_bn",
+      "out_relu",
+      "embedding",
+      "classifier_dropout",
+      "logits",
+      "probabilities"
+    ]
+  },
+  "storageCompression": {
+    "releasedFormat": "Float32",
+    "quantization": "none",
+    "bundleSizeMB": 8.922,
+    "rationale": "UINT8 conversion was rejected because its parity test produced only 15/38 Top-1 matches. Float32 achieved 38/38 and remains below the 10 MB limit."
+  },
+  "parity": {
+    "cases": 38,
+    "top1Matches": 38,
+    "exactTop3Matches": 38,
+    "top3SetMatches": 38,
+    "maximumAbsoluteProbabilityDrift": 3.069639205932617e-06,
+    "invalidProbabilityCases": 0,
+    "passed": true
+  }
+}

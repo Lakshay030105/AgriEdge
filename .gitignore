@@ -60,3 +60,18 @@ ENV/
 .cache/
 .vite/
 sw-cache*
+
+# ML datasets and training artifacts
+ml/data/
+ml/checkpoints/
+ml/runs/
+*.h5
+*.keras
+*.npy
+*.npz
+*.zip
+
+# Runtime and notebook caches
+.ipynb_checkpoints/
+**/__pycache__/
+**/node_modules/

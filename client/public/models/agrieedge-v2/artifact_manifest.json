@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "releaseName": "agrieedge-v2-release",
+  "createdAtUTC": "2026-08-23T15:45:24.148572+00:00",
+  "releaseApproved": true,
+  "deployableBytes": 9357189,
+  "deployableMegabytes": 9.357,
+  "files": [
+    {
+      "name": "group1-shard1of5.bin",
+      "bytes": 2097152,
+      "sha256": "7ace51f34658a82ceafa4cb8b19391ced70797ca0c65d6ee3812af2111cd7de0"
+    },
+    {
+      "name": "group1-shard2of5.bin",
+      "bytes": 2097152,
+      "sha256": "1c229d07f01702e06bac973dca198cd40d4a604e6f0bb56530b4c4a08a676984"
+    },
+    {
+      "name": "group1-shard3of5.bin",
+      "bytes": 2097152,
+      "sha256": "fd41fdaa0eea8b50af095c64cecf752d33fcaad385e1755a11279a4ef5ad43a3"
+    },
+    {
+      "name": "group1-shard4of5.bin",
+      "bytes": 2097152,
+      "sha256": "48edbfaa0cc291b859caccbc28ea5fd5b686c344e776dda89188aabebcb4e143"
+    },
+    {
+      "name": "group1-shard5of5.bin",
+      "bytes": 838040,
+      "sha256": "059a4d4f77f933637af32d1e28d613a18a623c5555e8a6de7e12fdcad20acc6e"
+    },
+    {
+      "name": "integration_contract.json",
+      "bytes": 346,
+      "sha256": "0f2628766cab791541f838c53c26b3fc34da2b748314be5c3f269398c2498e36"
+    },
+    {
+      "name": "labels.json",
+      "bytes": 7722,
+      "sha256": "ecfdb3f4ae14e91590fe9667e7b2a7ae3b75646bf96f0dd273b3207d42c0b765"
+    },
+    {
+      "name": "metadata.json",
+      "bytes": 1942,
+      "sha256": "6d484fd58aecc91f768e612c21f1621c90dc0e04c54ef61dd2cf9e93ff173863"
+    },
+    {
+      "name": "model.json",
+      "bytes": 120531,
+      "sha256": "942f4ba982d1d0d57a4d9c9162608a7f425366ea4ca105bd523922b990a8301a"
+    },
+    {
+      "name": "parity_report.json",
+      "bytes": 278,
+      "sha256": "fb644b8ad5b80e4999ae23e8135b99d2456d83b546e13d845eaadfbe88cabe37"
+    }
+  ]
+}
