@@ -1,11 +1,20 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import { initDatabase, db } from './db/db'; // Import your DB logic
 
 function FarmerScannerPlaceholder() {
+  const [treatmentCount, setTreatmentCount] = useState(0);
+
+  useEffect(() => {
+    // Count how many records are stored offline
+    db.treatments.count().then(setTreatmentCount);
+  }, []);
+
   return (
     <div className="screen-card">
       <h2>🌿 Farmer Scanner View</h2>
-      <p style={{ marginTop: '10px', color: '#8fa394' }}>
-        Camera viewfinder, Grad-CAM heatmap, and diagnosis engine will be mounted here.
+      <p style={{ marginTop: '10px', color: '#4ade80' }}>
+        Offline Database Ready: {treatmentCount} treatment protocols cached locally.
       </p>
     </div>
   );
@@ -16,13 +25,18 @@ function NGOCommandCenterPlaceholder() {
     <div className="screen-card">
       <h2>📡 NGO Command Center</h2>
       <p style={{ marginTop: '10px', color: '#8fa394' }}>
-        Live disease outbreak map (Level 2 stretch goal) will appear here.
+        Live disease outbreak map will appear here.
       </p>
     </div>
   );
 }
 
 export default function App() {
+  // Run the database initialization when the app starts
+  useEffect(() => {
+    initDatabase();
+  }, []);
+
   return (
     <BrowserRouter>
       <div className="app-container">
