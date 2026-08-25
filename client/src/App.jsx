@@ -1,24 +1,9 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { initDatabase, db } from './db/db'; // Import your DB logic
+import Scanner from './components/Scanner';
 
-function FarmerScannerPlaceholder() {
-  const [treatmentCount, setTreatmentCount] = useState(0);
 
-  useEffect(() => {
-    // Count how many records are stored offline
-    db.treatments.count().then(setTreatmentCount);
-  }, []);
-
-  return (
-    <div className="screen-card">
-      <h2>🌿 Farmer Scanner View</h2>
-      <p style={{ marginTop: '10px', color: '#4ade80' }}>
-        Offline Database Ready: {treatmentCount} treatment protocols cached locally.
-      </p>
-    </div>
-  );
-}
 
 function NGOCommandCenterPlaceholder() {
   return (
@@ -56,7 +41,7 @@ export default function App() {
 
         <main>
           <Routes>
-            <Route path="/" element={<FarmerScannerPlaceholder />} />
+            <Route path="/" element={<Scanner />} />
             <Route path="/ngo" element={<NGOCommandCenterPlaceholder />} />
           </Routes>
         </main>
