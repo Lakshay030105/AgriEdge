@@ -11,7 +11,9 @@ export default defineConfig({
       devOptions: { enabled: true },
       includeAssets: ['favicon.ico', 'models/**/*.json', 'models/**/*.bin'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,bin}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,bin}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        navigateFallback: '/index.html'
       },
       manifest: {
         name: 'AgriEdge Diagnostics',
