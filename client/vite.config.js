@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       devOptions: { enabled: true },
-      includeAssets: ['favicon.ico', 'models/**/*.json', 'models/**/*.bin'],
+      includeAssets: ['favicon.svg', 'favicon.ico', 'models/**/*.json', 'models/**/*.bin'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,bin}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
@@ -24,6 +24,11 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         icons: [
+          {
+            src: '/favicon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml'
+          },
           {
             src: '/favicon.ico',
             sizes: '64x64 32x32 24x24 16x16',

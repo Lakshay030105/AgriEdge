@@ -1,11 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
 import * as tf from '@tensorflow/tfjs';
-import { db } from '../db/db';
+import { db, saveFarmerScan } from '../db/db';
+import { calculateLeafSeverity, checkIsLeafImage } from '../ml/severityEngine';
+import SeverityAnalyzerCard from './SeverityAnalyzerCard';
+import DynamicTreatmentPlan from './DynamicTreatmentPlan';
+import KisanPrescriptionModal from './KisanPrescriptionModal';
+import ScanHistoryDrawer from './ScanHistoryDrawer';
+import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+
+const ALL_CROPS = [
+  { id: 'ALL', labelEn: '🌱 All Crops (Auto-Detect)', labelHi: '🌱 सभी फसलें (ऑटो पहचान)', icon: '🌱' },
+  { id: 'Strawberry', labelEn: '🍓 Strawberry', labelHi: '🍓 स्ट्रॉबेरी', icon: '🍓' },
+  { id: 'Tomato', labelEn: '🍅 Tomato', labelHi: '🍅 टमाटर', icon: '🍅' },
+  { id: 'Potato', labelEn: '🥔 Potato', labelHi: '🥔 आलू', icon: '🥔' },
+  { id: 'Apple', labelEn: '🍎 Apple', labelHi: '🍎 सेब', icon: '🍎' },
+  { id: 'Corn', labelEn: '🌽 Corn (Maize)', labelHi: '🌽 मक्का', icon: '🌽' },
+  { id: 'Pepper', labelEn: '🫑 Bell Pepper', labelHi: '🫑 शिमला मिर्च', icon: '🫑' },
+  { id: 'Grape', labelEn: '🍇 Grape', labelHi: '🍇 अंगूर', icon: '🍇' },
+  { id: 'Orange', labelEn: '🍊 Orange / Citrus', labelHi: '🍊 संतरा / नींबू', icon: '🍊' },
+  { id: 'Peach', labelEn: '🍑 Peach', labelHi: '🍑 आड़ू', icon: '🍑' },
+  { id: 'Cherry', labelEn: '🍒 Cherry', labelHi: '🍒 चेरी', icon: '🍒' },
+  { id: 'Blueberry', labelEn: '🫐 Blueberry', labelHi: '🫐 ब्लूबेरी', icon: '🫐' },
+  { id: 'Soybean', labelEn: '🌱 Soybean', labelHi: '🌱 सोयाबीन', icon: '🌱' },
+  { id: 'Squash', labelEn: '🎃 Squash', labelHi: '🎃 कद्दू / लौकी', icon: '🎃' },
+  { id: 'Raspberry', labelEn: '🍇 Raspberry', labelHi: '🍇 रसभरी', icon: '🍇' }
+];
 
 export default function Scanner() {
+  const { lang, t } = useLanguage();
+  const { farmer } = useAuth();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [historyTrigger, setHistoryTrigger] = useState(0);
   
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState(null);
@@ -16,6 +44,14 @@ export default function Scanner() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [prediction, setPrediction] = useState(null);
   const [treatment, setTreatment] = useState(null);
+  const [severityData, setSeverityData] = useState(null);
+
+  // Round 2 Real-World Reliability Additions
+  const [selectedCrop, setSelectedCrop] = useState('ALL');
+  const [showCropGrid, setShowCropGrid] = useState(false);
+  const [validationError, setValidationError] = useState(null);
+  const [confidenceWarning, setConfidenceWarning] = useState(null);
+  const [showPrescription, setShowPrescription] = useState(false);
 
   // 1. Load Model & Labels (LayersModel format)
   useEffect(() => {
@@ -24,104 +60,101 @@ export default function Scanner() {
       try {
         setLoadingError(null);
         await tf.ready();
-        // Model was exported from Keras as a layers-model, not a graph-model
         const loadedModel = await tf.loadLayersModel('/models/agrieedge-v2/model.json');
 
         const response = await fetch('/models/agrieedge-v2/labels.json');
         if (!response.ok) throw new Error(`HTTP ${response.status} loading labels.json`);
         const loadedLabels = await response.json();
 
+        // Warm up model to compile WebGL shaders and avoid first-scan UI lag
+        try {
+          tf.tidy(() => {
+            const dummyInput = tf.zeros([1, 224, 224, 3], 'float32');
+            loadedModel.predict(dummyInput);
+          });
+        } catch (warmupErr) {
+          console.warn("Model warmup non-critical note:", warmupErr);
+        }
+
         if (isMounted) {
           setModel(loadedModel);
           setLabels(loadedLabels);
+          console.log(`MobileNetV2 Float32 loaded successfully (${loadedLabels.length} classes).`);
         }
-      } catch (error) {
-        console.error("Failed to load AI model:", error);
-        if (isMounted) {
-          setLoadingError(error.message || "Failed to load AI model");
-        }
+      } catch (err) {
+        console.error("Model/labels load error:", err);
+        if (isMounted) setLoadingError(err.message);
       }
     }
     loadModelAndLabels();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
-  // 2. Initialize Camera with desktop-friendly constraints & auto-play
+  // 2. Camera Management with Desktop and Environmental Fallbacks
   const startCamera = async () => {
+    setIsCameraReady(false);
+    setCameraError(null);
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraError({
+        title: 'Camera API Not Supported',
+        message: 'Your browser or context (non-HTTPS) does not support live camera access. Please use the Upload Image button below.'
+      });
+      return;
+    }
+
     try {
-      setCameraError(null);
-      setIsCameraReady(false);
-
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setCameraError({
-          type: 'NotSupported',
-          title: 'Camera API Not Supported / Insecure Context',
-          message: 'The Camera API is unavailable. Ensure you are accessing via http://localhost:5173 or HTTPS.'
-        });
-        return;
-      }
-
-      // Stop any existing stream
-      if (videoRef.current && videoRef.current.srcObject) {
-        const currentTracks = videoRef.current.srcObject.getTracks();
-        currentTracks.forEach(track => track.stop());
-      }
-
-      let stream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-        });
-      } catch (firstErr) {
-        if (firstErr.name === 'NotAllowedError' || firstErr.name === 'PermissionDeniedError') {
-          throw firstErr;
-        }
-        // Fallback for laptops/desktops without rear camera
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      }
-
+      // First attempt: Rear/environmental camera
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
       if (videoRef.current) {
-        videoRef.current.muted = true;
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = async () => {
-          try {
-            await videoRef.current.play();
-            setIsCameraReady(true);
-            setCameraError(null);
-          } catch (playErr) {
-            console.warn("Video play interrupted:", playErr);
-          }
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play()
+            .then(() => setIsCameraReady(true))
+            .catch(playErr => {
+              console.warn("Autoplay blocked:", playErr);
+              setIsCameraReady(true);
+            });
         };
       }
-    } catch (err) {
-      console.error("Camera access failed:", err);
-      let title = "Camera Access Blocked / Unavailable";
-      let message = "Unable to access the camera.";
-
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        title = "Permission Denied in Browser";
-        message = "Camera access was denied. Click the lock/camera icon in your address bar (next to the URL), change Camera to 'Allow', and click 'Retry Camera' below.";
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        title = "No Camera Hardware Detected";
-        message = "No webcam or camera was found on your computer. You can upload a photo of a leaf using 'Upload Image' below to test diagnosis.";
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        title = "Camera In Use By Another Application";
-        message = "Your webcam is currently locked by another program (such as Zoom, Microsoft Teams, Discord, or the Windows Camera app). Close that program and click 'Retry Camera'.";
-      } else if (err.name === 'OverconstrainedError') {
-        title = "Resolution / Facing Mode Not Supported";
-        message = "The requested camera resolution was not supported by your hardware.";
+    } catch (rearErr) {
+      console.warn("Rear camera unavailable, attempting generic camera fallback...", rearErr);
+      try {
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current.play()
+              .then(() => setIsCameraReady(true))
+              .catch(playErr => {
+                console.warn("Fallback autoplay blocked:", playErr);
+                setIsCameraReady(true);
+              });
+          };
+        }
+      } catch (anyErr) {
+        console.error("Camera access failed completely:", anyErr);
+        let errorMsg = 'Could not access device camera.';
+        if (anyErr.name === 'NotAllowedError' || anyErr.name === 'PermissionDeniedError') {
+          errorMsg = 'Camera permission was denied. Please allow camera access in your browser settings, or use the file upload option below.';
+        } else if (anyErr.name === 'NotFoundError' || anyErr.name === 'DevicesNotFoundError') {
+          errorMsg = 'No physical camera device was detected on this computer/phone. Please use the Upload Image button below.';
+        } else if (anyErr.name === 'NotReadableError' || anyErr.name === 'TrackStartError') {
+          errorMsg = 'Camera is already in use by another application or tab. Please close other apps using the camera and click Retry.';
+        }
+        setCameraError({
+          title: anyErr.name || 'Camera Error',
+          message: errorMsg
+        });
       }
-
-      setCameraError({ type: err.name, title, message });
-      setIsCameraReady(false);
     }
   };
 
   useEffect(() => {
     startCamera();
-
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         const tracks = videoRef.current.srcObject.getTracks();
@@ -130,25 +163,84 @@ export default function Scanner() {
     };
   }, []);
 
-  // 3. Process Prediction and Query Treatment Database
-  const runInference = async (sourceElement) => {
+  // 3. Process Prediction with Quality Gate & Crop Filter
+  const runInference = async (sourceElement, cropOverride) => {
     if (!sourceElement || !model || isAnalyzing) return;
+    const activeCrop = cropOverride !== undefined ? cropOverride : selectedCrop;
+
     setIsAnalyzing(true);
     setPrediction(null);
     setTreatment(null);
+    setSeverityData(null);
+    setValidationError(null);
+    setConfidenceWarning(null);
 
     try {
+      // 1. Instant Agronomic Foliage Gate (Excess Green Index):
+      // Rejects non-plant objects (boxes, faces, hands, walls, furniture) with 0 false positives
+      const hasPlantFoliage = checkIsLeafImage(sourceElement);
+      if (!hasPlantFoliage) {
+        setValidationError(t('noLeafDetectedDesc'));
+        setPrediction(null);
+        setTreatment(null);
+        setSeverityData(null);
+        setIsAnalyzing(false);
+        return;
+      }
+
+      // Compute initial foliar severity
+      let initialSev = null;
+      try {
+        initialSev = await calculateLeafSeverity(sourceElement, { isHealthy: false });
+      } catch (sevErr) {
+        console.warn("Foliar validation pre-check error:", sevErr);
+      }
+
+      if (!initialSev || !initialSev.isLeaf) {
+        setValidationError(t('noLeafDetectedDesc'));
+        setPrediction(null);
+        setTreatment(null);
+        setSeverityData(null);
+        setIsAnalyzing(false);
+        return;
+      }
+
+      // 2. Deep Learning Classification with optional Crop Filter Constraint
       const { predictedClassIndex, confidenceScore } = tf.tidy(() => {
-        // MobileNet expects 224x224x3 float32 in [0, 255] range (internal Rescaling layer normalizes)
         const tensor = tf.browser.fromPixels(sourceElement)
           .resizeBilinear([224, 224])
           .expandDims(0)
           .toFloat();
         
-        const logits = model.predict(tensor);
-        const probabilities = tf.softmax(logits);
+        const probabilities = model.predict(tensor);
+        const probsArray = probabilities.dataSync();
+
+        // If specific crop filter is active, constrain prediction to that crop family
+        if (activeCrop !== 'ALL') {
+          let bestIdx = -1;
+          let bestVal = -1;
+
+          for (let i = 0; i < labels.length; i++) {
+            const raw = labels[i];
+            const dLabel = typeof raw === 'object' && raw !== null ? raw.datasetLabel : String(raw);
+            const matchesCrop = dLabel.toLowerCase().includes(activeCrop.toLowerCase());
+            
+            if (matchesCrop && probsArray[i] > bestVal) {
+              bestVal = probsArray[i];
+              bestIdx = i;
+            }
+          }
+
+          if (bestIdx !== -1) {
+            return {
+              predictedClassIndex: bestIdx,
+              confidenceScore: (bestVal * 100).toFixed(1)
+            };
+          }
+        }
+
         const maxConfidence = probabilities.max().dataSync()[0];
-        const classIdx = logits.argMax(1).dataSync()[0];
+        const classIdx = probabilities.argMax(1).dataSync()[0];
 
         return {
           predictedClassIndex: classIdx,
@@ -156,7 +248,11 @@ export default function Scanner() {
         };
       });
 
-      // labels is an array of objects: { datasetLabel, displayName, crop, condition, isHealthy }
+      // Confidence uncertainty warning
+      if (parseFloat(confidenceScore) < 40) {
+        setConfidenceWarning(t('lowConfidenceWarn'));
+      }
+
       const rawLabel = labels[predictedClassIndex];
       const classKey = typeof rawLabel === 'object' && rawLabel !== null
         ? rawLabel.datasetLabel
@@ -176,6 +272,15 @@ export default function Scanner() {
         confidence: confidenceScore,
         isHealthy
       });
+
+      // Compute Level 1 foliar severity
+      let sevData = null;
+      try {
+        sevData = await calculateLeafSeverity(sourceElement, { isHealthy });
+      } catch (sevErr) {
+        console.warn("Severity calculation error:", sevErr);
+      }
+      setSeverityData(sevData);
 
       // Query IndexedDB treatments
       let treatmentData = null;
@@ -198,6 +303,25 @@ export default function Scanner() {
       }
 
       setTreatment(treatmentData);
+
+      // Auto-save to Farmer's personal offline scan diary if logged in
+      if (farmer?.id) {
+        try {
+          await saveFarmerScan(farmer.id, {
+            prediction: {
+              label: displayName,
+              classId: classKey,
+              confidence: confidenceScore,
+              isHealthy
+            },
+            treatment: treatmentData,
+            severityData: sevData
+          }, sourceElement);
+          setHistoryTrigger(prev => prev + 1);
+        } catch (saveErr) {
+          console.warn("Failed to auto-save scan to diary:", saveErr);
+        }
+      }
     } catch (err) {
       console.error("Inference failed:", err);
       alert("Analysis failed: " + err.message);
@@ -206,18 +330,71 @@ export default function Scanner() {
     }
   };
 
+  const handleCropChange = (newCrop) => {
+    setSelectedCrop(newCrop);
+    if (selectedImage) {
+      const img = new Image();
+      img.onload = () => runInference(img, newCrop);
+      img.src = selectedImage;
+    }
+  };
+
+  const handleSelectHistoricalScan = (scan) => {
+    setPrediction({
+      label: scan.diseaseName,
+      classId: scan.classId,
+      confidence: scan.confidence || '95.0',
+      isHealthy: scan.isHealthy
+    });
+
+    setTreatment({
+      diseaseNameHi: scan.diseaseNameHi,
+      organicAction: scan.organicAction,
+      organicActionHi: scan.organicActionHi,
+      chemicalSpray: scan.chemicalSpray,
+      chemicalSprayHi: scan.chemicalSprayHi
+    });
+
+    setSeverityData({
+      severityScore: scan.severityScore,
+      tier: {
+        tier: scan.tier,
+        badge: scan.tierBadge || `Tier ${scan.tier}`
+      }
+    });
+
+    if (scan.thumbnail) {
+      setSelectedImage(scan.thumbnail);
+    }
+
+    setShowPrescription(true);
+  };
+
   const handleCapture = () => {
     if (selectedImage) {
       const img = new Image();
       img.onload = () => runInference(img);
       img.src = selectedImage;
-    } else if (videoRef.current) {
-      runInference(videoRef.current);
+      return;
     }
+
+    if (!videoRef.current || !isCameraReady) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg');
+    setSelectedImage(dataUrl);
+
+    runInference(canvas);
   };
 
   const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files && e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
@@ -225,30 +402,37 @@ export default function Scanner() {
       setSelectedImage(event.target.result);
       const img = new Image();
       img.onload = () => runInference(img);
+      img.onerror = () => {
+        setValidationError("Could not process image file. Please upload a clear photo.");
+        setIsAnalyzing(false);
+      };
       img.src = event.target.result;
     };
+    reader.onerror = () => {
+      setValidationError("File reading failed. Please try again.");
+      setIsAnalyzing(false);
+    };
     reader.readAsDataURL(file);
-  };
-
-  const handleLoadSample = () => {
-    const sampleUrl = '/sample-leaf.jpg';
-    setSelectedImage(sampleUrl);
-    const img = new Image();
-    img.onload = () => runInference(img);
-    img.src = sampleUrl;
+    e.target.value = '';
   };
 
   const handleClearImage = () => {
     setSelectedImage(null);
     setPrediction(null);
     setTreatment(null);
+    setSeverityData(null);
+    setValidationError(null);
+    setConfidenceWarning(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     startCamera();
   };
 
   return (
     <div className="screen-card">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <h2>🌿 Diagnostic Scanner</h2>
+        <h2>{t('diagnosticScanner')}</h2>
         <span style={{
           fontSize: '11px',
           padding: '4px 8px',
@@ -257,7 +441,7 @@ export default function Scanner() {
           color: model ? '#4ade80' : '#fbbf24',
           border: `1px solid ${model ? '#4ade80' : '#fbbf24'}`
         }}>
-          {model ? '● AI Engine Ready' : '⏳ Loading AI Engine...'}
+          {model ? t('aiReady') : t('aiLoading')}
         </span>
       </div>
 
@@ -293,7 +477,7 @@ export default function Scanner() {
                 cursor: 'pointer'
               }}
             >
-              🔄 Retry Camera
+              {t('retryCamera')}
             </button>
           </div>
           <p style={{ margin: 0, fontSize: '12px', color: '#e5f5e8', lineHeight: '1.4' }}>
@@ -302,7 +486,122 @@ export default function Scanner() {
         </div>
       )}
 
-      {/* Camera / Image Viewport */}
+      {/* Quick Crop Context Filter Bar (Dropdown + Visual Grid Toggler) */}
+      <div style={{
+        marginTop: '4px',
+        marginBottom: '10px',
+        backgroundColor: 'rgba(255, 255, 255, 0.04)',
+        padding: '8px 12px',
+        borderRadius: '10px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        textAlign: 'left'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '13px' }}>🌾</span>
+            <span style={{ fontSize: '12px', color: '#8fa394', fontWeight: '700' }}>
+              {t('selectCrop')}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end', minWidth: '220px' }}>
+            {/* Native Clean Dropdown with all 14 crops */}
+            <select
+              value={selectedCrop}
+              onChange={(e) => handleCropChange(e.target.value)}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: selectedCrop === 'ALL' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(74, 222, 128, 0.15)',
+                color: selectedCrop === 'ALL' ? '#e5f5e8' : '#4ade80',
+                border: `1px solid ${selectedCrop === 'ALL' ? 'rgba(255, 255, 255, 0.2)' : '#4ade80'}`,
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                outline: 'none',
+                maxWidth: '190px'
+              }}
+            >
+              {ALL_CROPS.map(c => (
+                <option key={c.id} value={c.id} style={{ backgroundColor: '#121816', color: '#e5f5e8' }}>
+                  {lang === 'hi' ? c.labelHi : c.labelEn}
+                </option>
+              ))}
+            </select>
+
+            {/* Toggle All Crops Grid Button */}
+            <button
+              onClick={() => setShowCropGrid(!showCropGrid)}
+              title="Toggle All Crops Grid"
+              style={{
+                padding: '6px 10px',
+                backgroundColor: showCropGrid ? '#4ade80' : 'rgba(255, 255, 255, 0.08)',
+                color: showCropGrid ? '#121816' : '#e5f5e8',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                fontSize: '11px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {showCropGrid ? '✕' : '▦ ' + (lang === 'hi' ? '14 फसलें' : 'All 14')}
+            </button>
+          </div>
+        </div>
+
+        {/* Expandable Visual Crop Grid (Displays all 14 crops cleanly) */}
+        {showCropGrid && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+            gap: '6px',
+            marginTop: '10px',
+            paddingTop: '10px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            maxHeight: '180px',
+            overflowY: 'auto'
+          }}>
+            {ALL_CROPS.map(c => {
+              const isSelected = selectedCrop === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    handleCropChange(c.id);
+                    setShowCropGrid(false);
+                  }}
+                  style={{
+                    padding: '6px 8px',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    fontWeight: isSelected ? '700' : '500',
+                    backgroundColor: isSelected ? '#4ade80' : 'rgba(0, 0, 0, 0.3)',
+                    color: isSelected ? '#121816' : '#e5f5e8',
+                    border: `1px solid ${isSelected ? '#4ade80' : 'rgba(255, 255, 255, 0.1)'}`,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span>{c.icon}</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {lang === 'hi' ? c.labelHi.replace(/^[^\s]+\s/, '') : c.labelEn.replace(/^[^\s]+\s/, '')}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Camera / Image Viewport with Reticle */}
       <div style={{
         position: 'relative',
         borderRadius: '12px',
@@ -310,7 +609,7 @@ export default function Scanner() {
         border: '2px solid rgba(255, 255, 255, 0.1)',
         backgroundColor: '#0a0f0d',
         aspectRatio: '1/1',
-        marginTop: '10px',
+        marginTop: '6px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -336,10 +635,11 @@ export default function Scanner() {
                 fontSize: '11px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                backdropFilter: 'blur(4px)'
+                backdropFilter: 'blur(4px)',
+                zIndex: 10
               }}
             >
-              ✕ Switch to Camera
+              {t('switchToCamera')}
             </button>
           </>
         ) : (
@@ -358,13 +658,54 @@ export default function Scanner() {
           />
         )}
 
+        {/* Sunlight Targeting Reticle (Only on Live Camera) */}
+        {isCameraReady && !selectedImage && (
+          <div style={{
+            position: 'absolute',
+            inset: '24px',
+            border: '2px dashed rgba(74, 222, 128, 0.5)',
+            borderRadius: '16px',
+            pointerEvents: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: '10px',
+            zIndex: 5
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '16px', height: '16px', borderTop: '3px solid #4ade80', borderLeft: '3px solid #4ade80' }} />
+              <div style={{ width: '16px', height: '16px', borderTop: '3px solid #4ade80', borderRight: '3px solid #4ade80' }} />
+            </div>
+
+            <div style={{
+              textAlign: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.65)',
+              color: '#4ade80',
+              fontSize: '11px',
+              fontWeight: '700',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              alignSelf: 'center',
+              backdropFilter: 'blur(4px)',
+              border: '1px solid rgba(74, 222, 128, 0.4)'
+            }}>
+              {t('centerLeafHere')}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ width: '16px', height: '16px', borderBottom: '3px solid #4ade80', borderLeft: '3px solid #4ade80' }} />
+              <div style={{ width: '16px', height: '16px', borderBottom: '3px solid #4ade80', borderRight: '3px solid #4ade80' }} />
+            </div>
+          </div>
+        )}
+
         {!isCameraReady && !selectedImage && (
           <div style={{ padding: '24px', color: '#8fa394', textAlign: 'center', maxWidth: '300px' }}>
             <p style={{ fontSize: '15px', fontWeight: '600', color: '#e5f5e8', marginBottom: '8px' }}>
-              📷 Camera Not Active
+              {t('cameraNotActive')}
             </p>
             <p style={{ fontSize: '12px', opacity: 0.85, marginBottom: '14px', lineHeight: '1.4' }}>
-              Click <strong>Retry Camera</strong> after enabling permissions in your address bar, or test immediately with a sample leaf:
+              {t('cameraNotActiveDesc')}
             </p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
               <button
@@ -380,10 +721,10 @@ export default function Scanner() {
                   cursor: 'pointer'
                 }}
               >
-                🔄 Retry Camera
+                {t('retryCamera')}
               </button>
               <button
-                onClick={handleLoadSample}
+                onClick={() => fileInputRef.current?.click()}
                 disabled={!model || isAnalyzing}
                 style={{
                   padding: '8px 12px',
@@ -396,7 +737,7 @@ export default function Scanner() {
                   cursor: (model && !isAnalyzing) ? 'pointer' : 'not-allowed'
                 }}
               >
-                🧪 Test Sample Leaf
+                {t('uploadImage')}
               </button>
             </div>
           </div>
@@ -411,7 +752,8 @@ export default function Scanner() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backdropFilter: 'blur(4px)'
+            backdropFilter: 'blur(4px)',
+            zIndex: 20
           }}>
             <div style={{
               width: '36px',
@@ -422,7 +764,7 @@ export default function Scanner() {
               animation: 'spin 1s linear infinite'
             }} />
             <p style={{ marginTop: '12px', color: '#4ade80', fontSize: '14px', fontWeight: 600 }}>
-              Analyzing Leaf...
+              {t('analyzing')}
             </p>
           </div>
         )}
@@ -448,7 +790,20 @@ export default function Scanner() {
             transition: 'all 0.2s ease'
           }}
         >
-          {isAnalyzing ? 'Scanning...' : (model ? (selectedImage ? '🔍 Analyze Leaf' : '📸 Scan Leaf') : 'Warming up AI...')}
+          {isAnalyzing ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <span style={{
+                display: 'inline-block',
+                width: '14px',
+                height: '14px',
+                border: '2px solid #121816',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                animation: 'spin 0.75s linear infinite'
+              }} />
+              {selectedImage ? t('analyzing') : t('scanning')}
+            </span>
+          ) : (model ? (selectedImage ? t('analyzeLeaf') : t('scanLeaf')) : t('warmingUp'))}
         </button>
 
         <button
@@ -465,26 +820,7 @@ export default function Scanner() {
             cursor: (model && !isAnalyzing) ? 'pointer' : 'not-allowed'
           }}
         >
-          📁 Upload Image
-        </button>
-
-        <button
-          onClick={handleLoadSample}
-          disabled={!model || isAnalyzing}
-          title="Load test tomato bacterial spot leaf"
-          style={{
-            padding: '14px 16px',
-            backgroundColor: 'rgba(74, 222, 128, 0.15)',
-            color: '#4ade80',
-            border: '1px solid rgba(74, 222, 128, 0.3)',
-            borderRadius: '8px',
-            fontWeight: '600',
-            fontSize: '14px',
-            cursor: (model && !isAnalyzing) ? 'pointer' : 'not-allowed',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          🧪 Sample
+          {t('uploadImage')}
         </button>
 
         <input
@@ -495,6 +831,41 @@ export default function Scanner() {
           style={{ display: 'none' }}
         />
       </div>
+
+      {/* Leaf Validation Gate Warning (Anti-Embarrassment Protection) */}
+      {validationError && (
+        <div style={{
+          marginTop: '16px',
+          padding: '14px',
+          backgroundColor: 'rgba(239, 68, 68, 0.15)',
+          border: '1px solid #ef4444',
+          borderRadius: '10px',
+          color: '#fca5a5',
+          fontSize: '13px',
+          textAlign: 'left'
+        }}>
+          <strong style={{ display: 'block', color: '#f87171', marginBottom: '4px' }}>
+            {t('noLeafDetected')}
+          </strong>
+          {validationError}
+        </div>
+      )}
+
+      {/* Low Confidence Warning */}
+      {confidenceWarning && prediction && (
+        <div style={{
+          marginTop: '12px',
+          padding: '8px 12px',
+          backgroundColor: 'rgba(251, 191, 36, 0.15)',
+          border: '1px solid #fbbf24',
+          borderRadius: '8px',
+          color: '#fef08a',
+          fontSize: '12px',
+          textAlign: 'left'
+        }}>
+          {confidenceWarning}
+        </div>
+      )}
 
       {/* Diagnosis & Treatment Results */}
       {prediction && (
@@ -509,48 +880,87 @@ export default function Scanner() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '8px',
+            marginBottom: '4px',
             borderBottom: '1px solid rgba(74, 222, 128, 0.2)',
-            paddingBottom: '8px'
+            paddingBottom: '10px'
           }}>
-            <h3 style={{ color: prediction.isHealthy ? '#4ade80' : '#f87171', fontSize: '15px', margin: 0, textAlign: 'left' }}>
-              {prediction.label}
-            </h3>
+            <div style={{ textAlign: 'left' }}>
+              <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#8fa394', fontWeight: '700' }}>
+                {t('pathogenId')}
+              </span>
+              <h3 style={{ color: prediction.isHealthy ? '#4ade80' : '#f87171', fontSize: '16px', margin: '2px 0 0 0' }}>
+                {lang === 'hi' && treatment?.diseaseNameHi ? treatment.diseaseNameHi : prediction.label}
+              </h3>
+            </div>
             <span style={{
-              backgroundColor: '#4ade80',
+              backgroundColor: prediction.isHealthy ? '#4ade80' : '#f87171',
               color: '#121816',
               fontWeight: 'bold',
               fontSize: '12px',
-              padding: '4px 8px',
+              padding: '4px 10px',
               borderRadius: '12px',
               whiteSpace: 'nowrap'
             }}>
-              {prediction.confidence}% Match
+              {prediction.confidence}% {t('match')}
             </span>
           </div>
 
-          {treatment && (
-            <div style={{ textAlign: 'left', marginTop: '12px' }}>
-              <div style={{ marginBottom: '12px' }}>
-                <span style={{ fontWeight: 'bold', color: '#fbbf24', display: 'block', marginBottom: '4px' }}>
-                  🌱 Organic Action:
-                </span>
-                <span style={{ color: '#e5f5e8', fontSize: '14px', lineHeight: '1.4' }}>
-                  {treatment.organicAction}
-                </span>
-              </div>
-              <div>
-                <span style={{ fontWeight: 'bold', color: '#f87171', display: 'block', marginBottom: '4px' }}>
-                  🧪 Chemical Spray:
-                </span>
-                <span style={{ color: '#e5f5e8', fontSize: '14px', lineHeight: '1.4' }}>
-                  {treatment.chemicalSpray}
-                </span>
-              </div>
-            </div>
-          )}
+          {/* Level 1 Computer Vision Foliar Severity Grading */}
+          <SeverityAnalyzerCard
+            severityData={severityData}
+            originalImage={selectedImage}
+            isHealthy={prediction.isHealthy}
+          />
+
+          {/* Dynamic Severity-Tiered IPM Treatment Action Plan */}
+          <DynamicTreatmentPlan
+            treatment={treatment}
+            prediction={prediction}
+            severityData={severityData}
+          />
+
+          {/* Kisan Prescription Ticket Generator */}
+          <button
+            onClick={() => setShowPrescription(true)}
+            style={{
+              marginTop: '16px',
+              width: '100%',
+              padding: '12px',
+              backgroundColor: 'rgba(74, 222, 128, 0.12)',
+              color: '#4ade80',
+              border: '1px solid rgba(74, 222, 128, 0.4)',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {t('kisanPrescription')}
+          </button>
         </div>
       )}
+
+      {/* Kisan Prescription Modal */}
+      <KisanPrescriptionModal
+        isOpen={showPrescription}
+        onClose={() => setShowPrescription(false)}
+        prediction={prediction}
+        treatment={treatment}
+        severityData={severityData}
+        capturedImage={selectedImage}
+      />
+
+      {/* Individual Farmer Crop Scan Diary */}
+      <ScanHistoryDrawer
+        farmerId={farmer?.id}
+        onSelectScan={handleSelectHistoricalScan}
+        refreshTrigger={historyTrigger}
+      />
     </div>
   );
-}
+}

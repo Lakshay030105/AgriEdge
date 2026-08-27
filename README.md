@@ -7,6 +7,10 @@
 [![Hackathon](https://img.shields.io/badge/OMNIKON-National%20Hackathon%202026-6366F1?style=for-the-badge&logo=target&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
 [![Track](https://img.shields.io/badge/Track-Software%20%7C%20AgriTech%20%26%20FoodTech-10B981?style=for-the-badge&logo=leaf&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
 [![Inference](https://img.shields.io/badge/Inference-100%25%20Offline%20(Zero--Cloud)-059669?style=for-the-badge&logo=speedtest&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
+[![Language](https://img.shields.io/badge/Bilingual-Hindi%20%7C%20English-10B981?style=for-the-badge&logo=googletranslate&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
+[![Kisan Identity](https://img.shields.io/badge/Kisan%20Identity-Offline%20IndexedDB%20Auth-3B82F6?style=for-the-badge&logo=sqlite&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
+[![Prescription](https://img.shields.io/badge/Digital%20Rx-Kisan%20Prescription%20%2B%20WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
+[![Quality Gate](https://img.shields.io/badge/Quality%20Gate-Woebbecke%20ExG%20Index-F59E0B?style=for-the-badge&logo=speedtest&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
 [![Severity Engine](https://img.shields.io/badge/Severity%20Grading-OpenCV.js%20%2B%20CV%20Segmentation-F59E0B?style=for-the-badge&logo=opencv&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
 [![Voice UI](https://img.shields.io/badge/Voice%20UI-Web%20Speech%20API%20(Hindi%2FEnglish)-8B5CF6?style=for-the-badge&logo=soundcharts&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
 [![Command Center](https://img.shields.io/badge/Command%20Center-Leaflet%20%2F%20Mapbox%20Heatmap-3B82F6?style=for-the-badge&logo=leaflet&logoColor=white)](https://github.com/Sahil-web01/AgriEdge)
@@ -32,7 +36,7 @@ In compliance with the official **OMNIKON 2026 Hackathon Eligibility & Documenta
 
 | Contributor | GitHub Username | Role | Key Architectural Ownership |
 |:---|:---|:---|:---|
-| **Sahil** | [`@Sahil-web01`](https://github.com/Sahil-web01) | **MERN Full-Stack Architect** | **Level 2 Lead:** NGO & Government Command Center architecture, React dashboard with interactive Leaflet.js / Mapbox GL live India outbreak heatmap, Node.js + Express REST backend, IndexedDB/Dexie.js deferred background sync pipeline, and Service Worker offline caching. |
+| **Sahil** | [`@Sahil-web01`](https://github.com/Sahil-web01) | **MERN Full-Stack Architect** | **Level 2 Lead & Kisan Ecosystem Architect:** Offline-first Kisan identity & PIN authentication, Zero-bloat personal scan diary, certified digital Kisan Prescription with 1-click WhatsApp dispatch, bilingual Hindi/English localization engine, PWA Service Worker precaching (31 assets, 11 MB), and NGO deferred sync pipeline. |
 | **Lakshay Gauniyal** | [`@Lakshay030105`](https://github.com/Lakshay030105) | **AI & Deep Learning Lead** | **Level 1 Lead:** MobileNetV2 fine-tuning on PlantVillage dataset (38 categories), browser-optimized Float32 TF.js model export (8.922 MiB bundle), 38/38 verified Python-to-TF.js parity validation, secondary Computer Vision edge segmentation filter (OpenCV.js / Canvas) for precise leaf surface area severity grading, and Grad-CAM class activation mapping. |
 
 ---
@@ -42,12 +46,12 @@ In compliance with the official **OMNIKON 2026 Hackathon Eligibility & Documenta
 ```
                                  AGRIEDGE THREE-TIER UPGRADE ARCHITECTURE
 ┌───────────────────────────────────────┬───────────────────────────────────────┬───────────────────────────────────────┐
-│     LEVEL 1: AI UPGRADE (Lakshay)     │     LEVEL 2: MERN UPGRADE (Sahil)     │     LEVEL 3: ACCESSIBILITY UPGRADE    │
+│     LEVEL 1: AI UPGRADE (Lakshay)     │     LEVEL 2: KISAN ECOSYSTEM (Sahil)  │     LEVEL 3: FIELD USABILITY & UI     │
 ├───────────────────────────────────────┼───────────────────────────────────────┼───────────────────────────────────────┤
-│ • Computer Vision Severity Grading    │ • NGO & Govt Admin Command Center     │ • Frictionless Voice-Driven UI        │
-│ • OpenCV.js Edge & Color Segmentation │ • Live Outbreak Heatmap (Leaflet.js)  │ • Web Speech API (STT & TTS)          │
-│ • Exact % Infected Leaf Surface Area  │ • Silent PWA Deferred Telemetry Sync  │ • Regional Language Audio (Hindi/Eng) │
-│ • Dynamic 3-Tier IPM Action Engine    │ • Express.js + Node REST Ingestion    │ • Sun-Optimized Pulsing Voice Trigger │
+│ • Computer Vision Severity Grading    │ • Zero-Cloud Farmer Identity & PIN    │ • Full Hindi ⇄ English Bilingual UI   │
+│ • Woebbecke ExG Chlorophyll Quality   │ • Personal Field Scan Diary (Dexie)   │ • Certified Kisan Prescription (Rx)   │
+│ • Exact % Infected Leaf Surface Area  │ • Zero-Storage-Bloat Micro-Thumbnails │ • 1-Click WhatsApp Share & PDF Print  │
+│ • Dynamic 3-Tier IPM Action Engine    │ • 1-Click Hackathon Judge Demo Login  │ • 14-Crop Dual-Mode Dropdown & Grid   │
 └───────────────────────────────────────┴───────────────────────────────────────┴───────────────────────────────────────┘
 ```
 
@@ -102,6 +106,42 @@ In compliance with the official **OMNIKON 2026 Hackathon Eligibility & Documenta
     - *"Take Photo"* / *"Scan Leaf"* / *"फोटो खींचो"* / *"स्कैन"* $\rightarrow$ triggers camera capture & analysis.
     - *"Read Advice"* / *"इलाज बताओ"* / *"आवाज़ सुनाओ"* $\rightarrow$ reads out the multi-tier treatment plan.
     - *"Switch to Hindi"* / *"Switch to English"* $\rightarrow$ toggles bilingual interface & speech synthesis.
+
+---
+
+### 🌾 Production Feature Additions: Zero-Cloud Kisan Ecosystem
+
+To ensure AgriEdge functions as a complete, field-ready production platform for rural smallholders, the following core features are fully integrated and verified:
+
+#### 1. 🧑‍🌾 Offline-First Kisan Identity & Personal Scan Diary
+- **Zero-Cloud Authentication:** Farmers can register and log in using **Mobile Number + 4-digit PIN** stored completely on-device in IndexedDB (`users` table) — no internet, SMS gateway, or cloud server required.
+- **🚀 1-Click Judge / Demo Login:** Evaluators can click the demo login button to immediately sign in as *Ramesh Patel (Nashik)* with zero manual typing during live hackathon judging.
+- **Personalized Field Diary:** Each scan is automatically recorded under the active farmer's account with crop name, disease, severity %, and timestamp.
+- **Zero-Storage-Bloat Engineering:** Snapshots are automatically downscaled to lightweight **128×128 micro-thumbnails (~4 KB)** with a **50-scan FIFO rolling buffer**, guaranteeing that total scan history storage never exceeds **~0.25 MB forever**.
+
+#### 2. 📋 Certified Digital Kisan Prescription (किसान पर्ची)
+- **Retailer-Ready Rx Ticket:** Generates an official agricultural clinic prescription ticket formatted for local fertilizer and pesticide retailers (*Kisan Seva Kendra*).
+- **Comprehensive Guidance:** Outlines exact chemical spray formulations & dosages, organic cultural remedies, foliar severity ratings, and optimal morning/evening application timing.
+- **1-Click WhatsApp & Print:** Instant WhatsApp sharing with local agronomists or shopkeepers (`api.whatsapp.com`) and browser PDF printing.
+
+#### 3. 🌿 Scientific Agronomic Vegetation Index Gate ($\text{ExG} = 2G - R - B$)
+- **Excess Green Index Pre-Screening:** Utilizes the Woebbecke agronomic vegetation index ($\text{ExG} = 2G - R - B$) to verify the presence of living plant chlorophyll ($G > R, G > B$).
+- **Anti-Embarrassment Protection:** Completely prevents non-plant objects (cardboard boxes, human faces, hands, walls, keyboards) from triggering false positive predictions by aborting before neural network evaluation.
+
+#### 4. 🌐 Full Hindi ⇄ English Bilingual Localization
+- **High-Visibility Switcher:** Prominent `[ 🇮🇳 हिंदी | 🇬🇧 English ]` toggle in the header with persistent `localStorage` preference memory.
+- **Comprehensive Dictionaries:** Translates all UI labels, severity tiers, warnings, and 38-class organic and chemical treatments.
+
+#### 5. 📴 Live Real-Time Offline Network Indicator
+- Dynamic header badge monitoring `navigator.onLine`:
+  - Disconnected / Airplane Mode: Glows green: `📴 100% Offline (Zero Cloud)`
+  - Connected: `⚡ On-Device AI Active`
+- Proves zero-cloud reliance to hackathon evaluators at a glance.
+
+#### 6. 🌱 14-Crop Dual-Mode Selector & Camera Reticle
+- **Dual-Mode Selector:** Combines a compact native dropdown containing all 14 PlantVillage crops with an expandable `[ ▦ All 14 ]` visual grid toggler.
+- **Reactive Re-Inference:** Changing the crop filter automatically re-evaluates active images in real time without requiring re-uploading.
+- **Sunlight Viewfinder Reticle:** High-contrast corner brackets and centered leaf placement guides engineered for outdoor visibility under direct midday sun glare.
 
 ---
 
@@ -254,18 +294,31 @@ AgriEdge/
 ├── client/                    # Offline-First React + Vite Progressive Web App (PWA)
 │   ├── public/
 │   │   ├── models/            # Browser-optimized Float32 MobileNetV2 TF.js model (8.922 MiB)
+│   │   ├── favicon.svg        # Offline app brand icon
 │   │   └── favicon.ico
 │   ├── src/
-│   │   ├── components/        # Scanner, Severity Card, Treatment Plan, Voice Button, NGO Map
-│   │   ├── db/                # Dexie.js IndexedDB schema & 38-class IPM dynamic treatment tiers
-│   │   ├── ml/                # TF.js inference runtime, OpenCV.js severity grading & Grad-CAM
-│   │   ├── services/          # Web Speech API voice assistant & telemetry background sync
-│   │   ├── utils/             # Canvas preprocessors (224x224x3) & image helpers
-│   │   ├── App.jsx            # Main app shell & Farmer / NGO navigation switch
-│   │   ├── main.jsx           # React root & service worker registration
-│   │   └── index.css          # Design system, dark glassmorphism & voice pulse animations
+│   │   ├── components/        # Scanner, Severity Card, Dynamic Treatment, Prescription, Auth Modal, Diary
+│   │   │   ├── Scanner.jsx
+│   │   │   ├── SeverityAnalyzerCard.jsx
+│   │   │   ├── DynamicTreatmentPlan.jsx
+│   │   │   ├── KisanPrescriptionModal.jsx    # Retailer-ready certified Rx ticket with WhatsApp & Print
+│   │   │   ├── FarmerAuthModal.jsx           # Zero-cloud offline mobile + PIN login & 1-click Demo
+│   │   │   └── ScanHistoryDrawer.jsx         # Zero-bloat chronological field scan diary
+│   │   ├── context/           # App-wide state providers
+│   │   │   ├── AuthContext.jsx               # Offline Kisan identity & session management
+│   │   │   └── LanguageContext.jsx           # Bilingual Hindi ⇄ English localization state
+│   │   ├── db/                # Dexie.js IndexedDB schema (Treatments, Users, Scans)
+│   │   │   ├── db.js                         # Database migrations, micro-thumbnail generator & helpers
+│   │   │   └── treatmentTiers.js             # 38-class verified bilingual organic & chemical IPM repository
+│   │   ├── ml/                # TF.js inference runtime & Woebbecke ExG computer vision severity engine
+│   │   │   └── severityEngine.js             # Chlorophyll ExG gate, HSV segmentation & foliar severity %
+│   │   ├── utils/             # Dictionaries & image helpers
+│   │   │   └── translations.js               # Comprehensive English & Hindi UI & treatment dictionaries
+│   │   ├── App.jsx            # Main app shell, dynamic offline indicator & farmer profile chip
+│   │   ├── main.jsx           # React root & PWA service worker registration
+│   │   └── index.css          # Design system, dark glassmorphism & responsive layouts
 │   ├── index.html
-│   ├── vite.config.js         # Vite configuration with proxy & PWA options
+│   ├── vite.config.js         # Vite configuration with PWA precaching & API proxy
 │   └── package.json
 ├── server/                    # Level 2 Deferred Cloud Telemetry Sync & NGO Command Server
 │   ├── src/
@@ -280,6 +333,7 @@ AgriEdge/
 │   ├── scripts/               # PlantVillage data prep, class weighting & export scripts
 │   └── requirements.txt       # Python training dependencies
 ├── docs/                      # Architectural specs, sprint strategies & research notes
+│   └── architecture.md        # Technical specifications, 38-class taxonomy & data schemas
 ├── .gitignore
 ├── LICENSE                    # MIT License
 └── README.md                  # Project Documentation
@@ -292,7 +346,7 @@ AgriEdge/
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
 - **npm** or **yarn** / **pnpm**
-- **Modern Browser**: Chrome, Edge, Safari, or Firefox with WebGL & Web Speech support
+- **Modern Browser**: Chrome, Edge, Safari, or Firefox with WebGL support
 
 ### 1. Clone the Repository
 ```bash
@@ -300,7 +354,7 @@ git clone https://github.com/Sahil-web01/AgriEdge.git
 cd AgriEdge
 ```
 
-### 2. Run Frontend Client (Farmer PWA & NGO Command Center)
+### 2. Run Frontend Client (Farmer PWA)
 ```bash
 cd client
 npm install
@@ -308,7 +362,7 @@ npm run dev
 ```
 Visit `http://localhost:5173` in your browser.
 
-### 3. Run Deferred Telemetry Sync Server
+### 3. Run Deferred Telemetry Sync Server (Optional)
 ```bash
 cd ../server
 npm install
@@ -318,19 +372,28 @@ Server runs at `http://localhost:5000`.
 
 ---
 
-## 🔍 Reviewer Notes
+## 🔍 Reviewer Notes & Live Evaluation Guide
 
 > [!NOTE]
-> **Notes Prepared for OMNIKON 2026 Evaluation Panel:**
+> **Checklist Prepared for OMNIKON 2026 Evaluation Panel:**
 
-1. **Zero-Cloud & Offline Edge Verification:**
-   - Open Chrome DevTools, navigate to **Network** tab, select **Offline**, and trigger a scan or voice command. The entire pipeline (MobileNetV2 classification, OpenCV.js severity grading, Grad-CAM generation, and IndexedDB lookup) executes with 0 network calls.
-2. **Level 1 Severity Grading:**
-   - Inspect the leaf segmentation mask and percentage calculation (`Infected Area / Leaf Area * 100%`) on the diagnostic report to verify dynamic tier switching (<10% organic pruning vs >30% chemical intervention).
-3. **Level 2 NGO Command Center:**
-   - Switch to the **NGO Command Center** view to inspect live outbreak cluster heatmaps across India and test background telemetry sync from local farmer scans.
-4. **Level 3 Voice Accessibility:**
-   - Click the large pulsing mic button or use hands-free voice commands (*"Take Photo"*, *"फोटो खींचो"*, *"Read Advice"*) to experience hands-free operation and regional bilingual speech synthesis in Hindi and English.
+1. **Zero-Cloud & 100% Offline Edge Verification:**
+   - Open Chrome DevTools (`F12`), navigate to the **Network** tab, and select **Offline** (or toggle your laptop/phone to **Airplane Mode**).
+   - Refresh the page: Observe the header badge dynamically turn green: **`📴 100% Offline (Zero Cloud)`**.
+   - Perform a scan: Model loading, Excess Green foliage screening, MobileNetV2 inference, severity segmentation, and IndexedDB treatment lookup all execute locally with **0 network calls**.
+2. **Offline Kisan Identity & 1-Click Judge Demo Login:**
+   - Tap the **`🧑‍🌾 Farmer Login`** button in the header.
+   - Click the golden **`🚀 Judge / Demo 1-Click Login`** button: You will instantly sign in as *Ramesh Patel (Nashik)* without typing.
+3. **Personal Field Diary & Zero-Bloat Storage:**
+   - Once logged in, perform any leaf scan. The diagnosis automatically saves into your **`📜 My Farm Scan Diary`** below.
+   - Inspect IndexedDB: Snapshots are auto-compressed to **128×128 micro-thumbnails (~4 KB)** with a rolling 50-scan FIFO buffer, capping total storage below **~0.25 MB forever**.
+   - Click **`📋 View Rx`** on any historical entry to re-open its exact prescription ticket.
+4. **Certified Digital Kisan Prescription:**
+   - Tap **`📋 Kisan Prescription`** after diagnosis to inspect the official Rx ticket. Test 1-click **WhatsApp Sharing** (`api.whatsapp.com`) and browser **Print / PDF Save**.
+5. **Anti-Embarrassment Foliage Gate ($\text{ExG} = 2G - R - B$):**
+   - Test pointing the camera at a face, hand, desk, or cardboard box: The Woebbecke Excess Green Index immediately flags absence of plant chlorophyll and displays **`⚠️ No Crop Foliage Detected`**, completely eliminating out-of-domain false positives.
+6. **Bilingual Hindi ⇄ English Switcher:**
+   - Tap **`🇮🇳 हिंदी`** in the header: Every label, severity metric, alert, and 38-class organic/chemical remedy transitions instantly into colloquial agricultural Hindi.
 
 ---
 

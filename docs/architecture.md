@@ -55,6 +55,51 @@ $$\text{Severity Percentage} = \left( \frac{\sum \text{Necrotic / Diseased Pixel
 
 ---
 
+## 3.1 Agronomic Foliage Gate & Quality Engine ($\text{ExG}$)
+
+To prevent out-of-domain false positives (e.g. human faces, hands, cardboard boxes, tables) from triggering erroneous neural network inferences, a pre-classification computer vision filter evaluates the **Woebbecke Excess Green Index ($\text{ExG}$)**:
+
+$$\text{ExG} = 2 \times G - R - B$$
+
+- **Plant Chlorophyll Criteria:** $G > R$ and $G > B$ and $\text{ExG} > 20$ with $G > 40$.
+- **Validation Gate:** The frame is downsampled to an offscreen 128×128 canvas. If total photosynthetic vegetation pixels $< 300$ ($<1.8\%$ of frame), the pipeline instantly halts and renders `⚠️ No Crop Foliage Detected` without invoking TensorFlow.js.
+
+---
+
+## 3.2 Offline-First Kisan Identity & Scan Diary Schemas
+
+### Dexie IndexedDB Schema (`AgriEdgeDB` v2)
+
+```javascript
+db.version(2).stores({
+  treatments: 'classId, cropName, diseaseName, organicAction, chemicalSpray',
+  users: '++id, &phone, name, village, pin, createdAt',
+  scans: '++id, farmerId, timestamp, classId, cropName, diseaseName, severityScore, isHealthy'
+});
+```
+
+### Zero-Storage-Bloat Policy:
+1. **Micro-Thumbnails:** Leaf snapshots captured on camera are downscaled to 128×128 JPEG ($quality = 0.65$), consuming only $\approx 4\text{ KB}$ per record.
+2. **Rolling FIFO Retention:** A per-farmer buffer automatically evicts records exceeding 50 scans, permanently bounding total diagnostic storage below $0.25\text{ MB}$.
+
+---
+
+## 3.3 Certified Digital Kisan Prescription Specification
+
+- **Purpose:** Official agrarian diagnostic ticket formatted for local agri-input retailers (*Kisan Seva Kendra*).
+- **Core Attributes:**
+  - Date & Timestamp (localized)
+  - Crop & Pathogen Identification
+  - Folier Severity Score (%) & Assigned Tier
+  - Prescribed Chemical Formulation & Application Dosage
+  - Prescribed Organic / Cultural Remedy
+  - Optimal Field Application Window (e.g. 6–9 AM calm morning)
+- **Distribution Channels:**
+  - 1-Click WhatsApp Direct Dispatch (`https://api.whatsapp.com/send?text=...`)
+  - Native Print / PDF Save (`window.print()`)
+
+---
+
 ## 4. Level 2: NGO & Government Outbreak Command Center
 
 - **Eventual Consistency Model:** When a farmer's device reconnects to Wi-Fi or cellular networks, the Background Sync API silently serializes all pending IndexedDB diagnostic logs and dispatches an HTTP POST request to `/api/telemetry/sync`.
